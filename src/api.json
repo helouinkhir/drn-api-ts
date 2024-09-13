@@ -385,10 +385,7 @@
                       "required": ["text", "colors"],
                       "properties": {
                         "colors": {
-                          "type": "array",
-                          "items": {
                             "$ref": "#/components/schemas/VisionResponseColors"
-                          }
                         },
                         "text": {
                           "type": "object",
@@ -1396,39 +1393,28 @@
           },
           "word": {
             "type": "string"
+          },
+          "category": {
+            "type": "string"
           }
         }
       },
       "VisionResponseColors": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["color", "name", "score", "pixelFraction"],
+        "required": ["primary", "score"],
         "properties": {
-          "color": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["red", "green", "blue", "alpha"],
-            "properties": {
-              "red": {
-                "type": "number"
+              "primary": {
+                "type": "string"
               },
-              "green": {
+              "score": {
                 "type": "number"
-              },
-              "blue": {
-                "type": "number"
-              },
-              "alpha": {
-                "type": "number",
-                "nullable": true
               }
+          
             }
-          },
-          "name": { "type": "string" },
-          "score": { "type": "number" },
-          "pixelFraction": { "type": "number" }
+          }
         }
       }
     }
-  }
-}
+  
+

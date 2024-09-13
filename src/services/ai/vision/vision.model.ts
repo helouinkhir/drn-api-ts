@@ -9,5 +9,14 @@ export type TextData = {
   words: {
     word: string;
     confidence: number;
+    category?: string;
   }[];
 };
+
+export type ImageDetectionDatacategorized = {
+  text: TextData;
+  colors: {
+    primary: string;
+    score: number;
+  }
+}
