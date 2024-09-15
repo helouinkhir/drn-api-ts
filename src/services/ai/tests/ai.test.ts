@@ -4,7 +4,7 @@ import { mockData, token } from './mock-data';
 
 
 
-describe('GET catorized image text', () => {
+describe('GET categorized image text', () => {
     for (const mock of mockData) {
       test(`test image result`, async () => {
         const response = await request(app).post("/ai/image")
