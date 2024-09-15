@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PostImageTextRequest } from "./ai.service.model";
+import { Category, PostImageTextRequest } from "./ai.service.model";
 import vision from "./vision/vision";
 import {
   ImageDetectionData,
@@ -50,27 +50,25 @@ const categorizeData = (
   discs: string[],
   phoneRegex: RegExp
 ): ImageDetectionDatacategorized => {
-  data.text.words.forEach(
-    (w) =>
-      (w.category = getCategory(
-        w.word.toLowerCase(),
-        brands,
-        discs,
-        phoneRegex
-      ))
-  );
+
   const colorWithMaxScore = data.colors.reduce((prev, current) => {
     return prev.score > current.score ? prev : current;
   });
 
-  const colors = {
-    primary: getPrimaryColor(colorWithMaxScore),
-    score: colorWithMaxScore.score,
-  };
 
   return  { 
-    text: data.text,
-    colors
+    text: {...data.text, words:data.text.words.map(
+      (w) => ({...w, category: getCategory(
+        w.word.toLowerCase(),
+        brands,
+        discs,
+        phoneRegex
+      )}))} 
+    ,
+    colors : {
+      primary: getPrimaryColor(colorWithMaxScore),
+      score: colorWithMaxScore.score,
+    }
   };
 };
 
@@ -80,11 +78,11 @@ const getCategory = (
   discs: string[],
   phoneRegex: RegExp
 ): string => {
-  if (brands.includes(word)) return "Brand";
-  if (discs.includes(word)) return "Disc";
-  if (phoneRegex.test(word)) return "Phone number";
+  if (brands.includes(word)) return Category.BRAND;
+  if (discs.includes(word)) return Category.Disc;
+  if (phoneRegex.test(word)) return Category.PHONE_NUMBER;
 
-  return "N/A";
+  return Category.NA;
 };
 
 const getPrimaryColor = (
