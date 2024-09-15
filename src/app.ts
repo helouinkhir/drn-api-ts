@@ -150,3 +150,5 @@ app.post("/sms", requireLogin, ...apiSpecMiddleware, postSms);
 app.listen(APP_PORT, () => {
   return console.log(`Server listening @ http://localhost:${APP_PORT}`);
 });
+
+export default app;

@@ -7,6 +7,7 @@ import {
 } from "./vision/vision.model";
 import db from "../../db/db";
 import { google } from "@google-cloud/vision/build/protos/protos";
+import { isCloseWord } from "../fuzzy-search/fuzzy-search.service";
 
 /**
  * handle post /ai/image request to send response of vision data
@@ -32,11 +33,13 @@ export const postImageText = async (
     res.status(500).send({ errors: [] });
     return;
   }
+  
   const brands = (brandsDbResponse.data as { BrandName: string }[]).map((b) =>
-    b.BrandName.toLowerCase()
-  );
+    b.BrandName
+   );
+
   const discs = (discsDbResponse.data as { MoldName: string }[]).map((d) =>
-    d.MoldName.toLowerCase()
+    d.MoldName
   );
   const phoneRegex = /^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/;
   res.send({
@@ -78,8 +81,8 @@ const getCategory = (
   discs: string[],
   phoneRegex: RegExp
 ): string => {
-  if (brands.includes(word)) return Category.BRAND;
-  if (discs.includes(word)) return Category.Disc;
+  if (isCloseWord(word, brands)) return Category.BRAND;
+  if (isCloseWord(word, discs)) return Category.Disc;
   if (phoneRegex.test(word)) return Category.PHONE_NUMBER;
 
   return Category.NA;
