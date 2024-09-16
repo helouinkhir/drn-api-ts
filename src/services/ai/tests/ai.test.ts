@@ -6,7 +6,7 @@ import { mockData, token } from './mock-data';
 
 describe('GET categorized image text', () => {
     for (const mock of mockData) {
-      test(`test image result`, async () => {
+      test(mock.label, async () => {
         const response = await request(app).post("/ai/image")
         .set('Authorization', `Bearer ${token}`)
         .set('Accept', 'application/json')
