@@ -41,12 +41,13 @@ export const createMapping = (startLength: number,words: RankedWordModel[], bran
         length--;
     }
 
-    if(length>0) {
-       mappings.concat(currentMappings);
+    if(currentMappings.length) {
+      mappings = mappings.concat(currentMappings);
        let currentWords: number[] = wordsUniqueRanks(mappings);
+ 
    
 
-       mappings = createMapping(length-1, words.filter(w => !currentWords.includes(w.rank)), brands, discs, phoneRegex,mappings);
+       mappings = createMapping(length, words.filter(w => !currentWords.includes(w.rank)), brands, discs, phoneRegex,mappings);
     }
    
     return mappings;
@@ -78,8 +79,8 @@ const createMappingBySequenceLength = (length: number, words: RankedWordModel[],
         return mappings;
 }
 
-const mapSequenceToCategory = (sequence: RankedWordModel[], brands: string[], discs: string[], phoneRegex): Mapping | null => {
-    const sentence = sequence.join(' ');
+const mapSequenceToCategory = (sequence: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp): Mapping | null => {
+    const sentence = sequence.map(s => s.word).join(' ');
     for(const b of brands) {
         if(similarityPercentage(sentence.toLocaleLowerCase(),b.toLocaleLowerCase()) >= FUZZY_CONIDENT) return  {
             sequence,

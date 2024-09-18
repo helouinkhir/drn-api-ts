@@ -54,6 +54,7 @@ const categorizeData = (
   discs: string[],
   phoneRegex: RegExp
 ): ImageDetectionDatacategorized => {
+  console.log(JSON.stringify(data.text.words))
 
   const colorWithMaxScore = data.colors.reduce((prev, current) => {
     return prev.score > current.score ? prev : current;

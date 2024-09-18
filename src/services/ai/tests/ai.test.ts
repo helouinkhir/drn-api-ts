@@ -20,7 +20,7 @@ describe('GET categorized image text', () => {
 
         for(const expected of mock.expectedResults) {
           if(!(expected.word instanceof RegExp)){
-            let word = result.text.words.find(w => w.word === expected.word);
+            let word = result.text.words.find(w => w.word == expected.word);
             expect(word).toBeDefined();
             expect(word.category).toEqual(expected.category);
           } else {
