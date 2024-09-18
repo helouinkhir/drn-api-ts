@@ -7,7 +7,7 @@ import {
 } from "./vision/vision.model";
 import db from "../../db/db";
 import { google } from "@google-cloud/vision/build/protos/protos";
-import { isCloseWord } from "../fuzzy-search/fuzzy-search.service";
+import { createMapping, isCloseWord } from "../fuzzy-search/fuzzy-search.service";
 
 /**
  * handle post /ai/image request to send response of vision data
@@ -59,6 +59,15 @@ const categorizeData = (
   });
 
 
+  const mappings = createMapping(data.text.words.length,
+     data.text.words.map((w, index) => ({...w,rank: index})),
+     brands,
+     discs,
+     phoneRegex,
+     []
+    )
+
+
   return  { 
     text: {...data.text, words:data.text.words.map(
       (w) => ({...w, category: getCategory(
@@ -75,18 +84,6 @@ const categorizeData = (
   };
 };
 
-const getCategory = (
-  word: string,
-  brands: string[],
-  discs: string[],
-  phoneRegex: RegExp
-): string => {
-  if (isCloseWord(word, brands)) return Category.BRAND;
-  if (isCloseWord(word, discs)) return Category.Disc;
-  if (phoneRegex.test(word)) return Category.PHONE_NUMBER;
-
-  return Category.NA;
-};
 
 const getPrimaryColor = (
   color: google.cloud.vision.v1.IColorInfo & Record<"name", string>
