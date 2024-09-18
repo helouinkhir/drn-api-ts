@@ -4,10 +4,11 @@ import vision from "./vision/vision";
 import {
   ImageDetectionData,
   ImageDetectionDatacategorized,
+  WordModel,
 } from "./vision/vision.model";
 import db from "../../db/db";
 import { google } from "@google-cloud/vision/build/protos/protos";
-import { createMapping, isCloseWord } from "../fuzzy-search/fuzzy-search.service";
+import { createMapping } from "../fuzzy-search/fuzzy-search.service";
 
 /**
  * handle post /ai/image request to send response of vision data
@@ -67,15 +68,26 @@ const categorizeData = (
      []
     )
 
+    const mappedWords: WordModel[] = mappings.map(m =>({
+      word: m.matchText,
+      confidence: Math.min(...m.sequence.map(s =>s.confidence)),
+      category: m.category
+    }));
+
+    const mappingRanks: number[] = mappings.map(m => m.sequence).reduce((acc, subArray) => {
+      subArray.forEach(obj => {
+        if (!acc.some(item => item.rank === obj.rank)) {
+          acc.push(obj);
+        }
+      });
+      return acc;
+    }, []).map(s => s.rank);
+
+    const notMappedWords: WordModel[] = data.text.words.filter((w, index) => !mappingRanks.includes(index)).map(w => ({...w, category: Category.NA }))
+
 
   return  { 
-    text: {...data.text, words:data.text.words.map(
-      (w) => ({...w, category: getCategory(
-        w.word.toLowerCase(),
-        brands,
-        discs,
-        phoneRegex
-      )}))} 
+    text: {...data.text, words:[mappedWords, notMappedWords].flat()} 
     ,
     colors : {
       primary: getPrimaryColor(colorWithMaxScore),
