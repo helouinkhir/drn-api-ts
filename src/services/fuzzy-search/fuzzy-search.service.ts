@@ -43,14 +43,7 @@ export const createMapping = (startLength: number,words: RankedWordModel[], bran
 
     if(length>0) {
        mappings.concat(currentMappings);
-       let currentWords: number[] = mappings.map(m => m.sequence).reduce((acc, subArray) => {
-        subArray.forEach(obj => {
-          if (!acc.some(item => item.rank === obj.rank)) {
-            acc.push(obj);
-          }
-        });
-        return acc;
-      }, []).map(s => s.rank);
+       let currentWords: number[] = wordsUniqueRanks(mappings);
    
 
        mappings = createMapping(length-1, words.filter(w => !currentWords.includes(w.rank)), brands, discs, phoneRegex,mappings);
@@ -59,7 +52,20 @@ export const createMapping = (startLength: number,words: RankedWordModel[], bran
     return mappings;
 }
 
-export const createMappingBySequenceLength = (length: number, words: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp): Mapping[] => {
+export const wordsUniqueRanks= (mappings: Mapping[]) => {
+    return  mappings.map(m => m.sequence).reduce((acc, subArray) => {
+        subArray.forEach(obj => {
+          if (!acc.some(item => item.rank === obj.rank)) {
+            acc.push(obj);
+          }
+        });
+        return acc;
+      }, []).map(s => s.rank);
+
+
+}
+
+const createMappingBySequenceLength = (length: number, words: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp): Mapping[] => {
         let sequences = generateWordSequences(length, words);
         let  mappings: Mapping[] = []
         let mapping = null;
@@ -72,7 +78,7 @@ export const createMappingBySequenceLength = (length: number, words: RankedWordM
         return mappings;
 }
 
-export const mapSequenceToCategory = (sequence: RankedWordModel[], brands: string[], discs: string[], phoneRegex): Mapping | null => {
+const mapSequenceToCategory = (sequence: RankedWordModel[], brands: string[], discs: string[], phoneRegex): Mapping | null => {
     const sentence = sequence.join(' ');
     for(const b of brands) {
         if(similarityPercentage(sentence.toLocaleLowerCase(),b.toLocaleLowerCase()) >= FUZZY_CONIDENT) return  {
@@ -99,7 +105,7 @@ export const mapSequenceToCategory = (sequence: RankedWordModel[], brands: strin
 }
 
 
-export const generateWordSequences = (length: number, words: RankedWordModel[]): RankedWordModel[][] => {
+const generateWordSequences = (length: number, words: RankedWordModel[]): RankedWordModel[][] => {
     let i = 0;
     let sequences = [];
     while(i< words.length && words.length -i >= length) {
