@@ -1,4 +1,5 @@
 import { Category } from '../ai/ai.service.model';
+import { WordModel } from '../ai/vision/vision.model';
 import { Mapping, RankedWordModel } from './fuzzy-search.model';
 import { FUZZY_CONIDENT } from './fuzzy.const';
 
@@ -30,6 +31,40 @@ const  similarityPercentage = (s1: string, s2: string):number => {
     const maxLength = Math.max(s1.length, s2.length);
     const similarity = (maxLength - distance) / maxLength;
     return similarity;
+}
+
+// for each words loop over each word and check if there is a word on the list equal to this one or is part of a composite word
+/*
+
+*/
+
+const checkWordInTheList = (words: RankedWordModel[], dataSet: string[]): {words: RankedWordModel[]; matchTxt: string;} => {
+   for(const d of dataSet) {
+    if(similarityPercentage(d, words[0].word) >= FUZZY_CONIDENT ) return {words: [words[0]], matchTxt: d};
+   
+              const dWords = d.split(' ');
+
+              if(dWords.length > 1) {
+                for(let i=0; i< dWords.length; i++) {
+
+                    if(similarityPercentage(dWords[i], words[0].word) >= FUZZY_CONIDENT) {
+                        let similarities = []
+                        let indexData =i;
+                        let indexWords=1;
+                       while(indexData < dWords.length && indexWords <words.length) {
+                        if(!(similarityPercentage(dWords[indexData],words[indexWords].word)>= FUZZY_CONIDENT))  {
+                            similarities.push(words[indexWords]);
+                            indexData++;
+                            indexWords++;
+                        }
+                       }
+                           
+                        
+                    }
+                }
+              }
+   }
+
 }
 
 export const createMapping = (startLength: number,words: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp, mappings: Mapping[]): Mapping[] => {
