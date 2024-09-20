@@ -85,58 +85,47 @@ export const matchedWords = (words: RankedWordModel[], dataSet: string[], catego
       
      return  {mapped: matchedWords, notMapped: notMatched }
 }
-
 const checkWordInTheList = (currentWord: RankedWordModel, words: RankedWordModel[], dataSet: string[]): Mapping[] => {
- let  mappings= [];
+  const mappings: Mapping[] = [];
 
-for(const d of dataSet) {
-  if (similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT) {
-    mappings.push({ sequence: [currentWord], matchText: d });
-    continue;
-  }
+  for (const data of dataSet) {
+    const similarity = similarityPercentage(data, currentWord.word);
 
-  const dWords = d.split(" ");
+   
+    if (similarity >= FUZZY_CONIDENT) {
+      mappings.push({ sequence: [currentWord], matchText: data });
+      continue;
+    }
 
-  if (dWords.length > 1) {
-    let i = 0;
-    let found = false;
-    while (i < dWords.length && !found) {
-      if (similarityPercentage(dWords[i], currentWord.word) >= FUZZY_CONIDENT) {
-        let similarities = [currentWord];
+    const dataWords = data.split(" ");
 
-        let indexWords = 1;
-        i = i + 1;
-        while (i < dWords.length && indexWords < words.length && !found) {
-          if (
-            similarityPercentage(dWords[i], words[indexWords].word) >=
-            FUZZY_CONIDENT
-          ) {
-            similarities.push(words[indexWords]);
+    if (dataWords.length > 1) {
+      let matchedSequence: RankedWordModel[] = [];
+      let dataIndex = 0, wordIndex = 0;
 
-            indexWords++;
-          }
-          i++;
+    
+      while (dataIndex < dataWords.length && wordIndex < words.length) {
+        const wordSimilarity = similarityPercentage(dataWords[dataIndex], words[wordIndex].word);
+        
+        if (wordSimilarity >= FUZZY_CONIDENT) {
+          matchedSequence.push(words[wordIndex]);
+          wordIndex++;
+        } else if (matchedSequence.length > 0) {
+          break;
         }
 
-        if (
-          similarities.length > 1 &&
-          similarities.length / dWords.length >= 0.5
-        ) {
-          mappings.push({
-            sequence: similarities,
-            matchText: d,
-          });
-          found = true;
-        }
+        dataIndex++;
       }
-      i++;
+
+      if (matchedSequence.length > 1 && matchedSequence.length / dataWords.length >= 0.5) {
+        mappings.push({ sequence: matchedSequence, matchText: data });
+      }
     }
   }
-}
 
-   return mappings;
+  return mappings;
+};
 
-}
 
 const generateNumberSequences = (length: number, words: RankedWordModel[]): RankedWordModel[][] => {
     let i = 0;
@@ -164,7 +153,5 @@ export const wordsUniqueRanks= (mappings: Mapping[]) => {
         });
         return acc;
       }, []).map(s => s.rank);
-
-
 }
 
