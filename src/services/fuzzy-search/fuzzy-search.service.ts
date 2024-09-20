@@ -84,7 +84,10 @@ const checkWordInTheList = (currentWord: RankedWordModel, words: RankedWordModel
  let  mappings= [];
 
 for(const d of dataSet) {
-    if(similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT ) return [{sequence: [ currentWord ], matchText: d}];
+    if(similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT ) {
+        mappings.push({sequence: [ currentWord ], matchText: d})
+       continue;
+    }
               const dWords = d.split(' ');
 
 

@@ -65,10 +65,11 @@ const categorizeData = (
   const brandWordMapping = matchedWords(numberMapping.notNumbers.map((w,index) =>({...w, rank: index})),brands,Category.BRAND);
 
   const discWordMapping = matchedWords(brandWordMapping.notMapped,discs,Category.Disc);
+  const notMapped = discWordMapping.notMapped.map(w => ({word:w.word,confidence:w.confidence,category: Category.NA}))
 
 
   return  { 
-    text: {...data.text, words:[brandWordMapping.mapped, discWordMapping.mapped, numberMapping.mapping].flat()} 
+    text: {...data.text, words:[brandWordMapping.mapped, discWordMapping.mapped, numberMapping.mapping, notMapped].flat()} 
     ,
     colors : {
       primary: getPrimaryColor(colorWithMaxScore),
