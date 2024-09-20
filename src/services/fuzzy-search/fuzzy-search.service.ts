@@ -67,12 +67,10 @@ export const matchedWords = (words: RankedWordModel[], dataSet: string[], catego
      while(currentWords.length) {
         const matched = checkWordInTheList(currentWords[0],currentWords,dataSet);
         if(matched.length) {
-      matched.forEach(m => matchedWords.push({
-        word: m.matchText, 
-        confidence: Math.min(...m.sequence.map(s =>s.confidence)),
-         category})) 
-      
-      
+            matched.forEach(m => matchedWords.push({
+              word: m.matchText, 
+              confidence: Math.min(...m.sequence.map(s =>s.confidence)),
+              category})) 
       
             const ranks = wordsUniqueRanks(matched)
             currentWords=currentWords.filter(c => !ranks.includes(c.rank) );
@@ -81,7 +79,6 @@ export const matchedWords = (words: RankedWordModel[], dataSet: string[], catego
             notMatched.push(currentWords[0]);
             currentWords.shift();  
         } 
-     
      }
      
       
@@ -92,45 +89,49 @@ const checkWordInTheList = (currentWord: RankedWordModel, words: RankedWordModel
  let  mappings= [];
 
 for(const d of dataSet) {
-    if(similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT ) {
-        mappings.push({sequence: [ currentWord ], matchText: d})
-       continue;
+  if (similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT) {
+    mappings.push({ sequence: [currentWord], matchText: d });
+    continue;
+  }
+
+  const dWords = d.split(" ");
+
+  if (dWords.length > 1) {
+    let i = 0;
+    let found = false;
+    while (i < dWords.length && !found) {
+      if (similarityPercentage(dWords[i], currentWord.word) >= FUZZY_CONIDENT) {
+        let similarities = [currentWord];
+
+        let indexWords = 1;
+        i = i + 1;
+        while (i < dWords.length && indexWords < words.length && !found) {
+          if (
+            similarityPercentage(dWords[i], words[indexWords].word) >=
+            FUZZY_CONIDENT
+          ) {
+            similarities.push(words[indexWords]);
+
+            indexWords++;
+          }
+          i++;
+        }
+
+        if (
+          similarities.length > 1 &&
+          similarities.length / dWords.length >= 0.5
+        ) {
+          mappings.push({
+            sequence: similarities,
+            matchText: d,
+          });
+          found = true;
+        }
+      }
+      i++;
     }
-              const dWords = d.split(' ');
-
-
-              if(dWords.length > 1) {
-                let i =0;
-                let found=false;
-                while(i< dWords.length && !found){
-
-                    if(similarityPercentage(dWords[i], currentWord.word ) >= FUZZY_CONIDENT) {
-                        let similarities = [ currentWord ]
-                   
-                    
-                        let indexWords= 1;
-                        i=i+1;
-                       while(i < dWords.length && indexWords <words.length && !found) {
-                        if(similarityPercentage(dWords[i],words[indexWords].word)>= FUZZY_CONIDENT) {
-                            similarities.push(words[indexWords]);
-                       
-                            indexWords++;
-                        }
-                        i++;
-                       }  
-                       
-                       if(similarities.length > 1 && similarities.length/dWords.length >=0.5) {
-                        mappings.push({
-                            sequence: similarities,
-                            matchText: d,
-                        })
-                        found=true;
-                       }
-                    }
-                    i++;
-                }
-              }
-   }
+  }
+}
 
    return mappings;
 
