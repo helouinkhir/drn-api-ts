@@ -33,6 +33,7 @@ const  similarityPercentage = (s1: string, s2: string):number => {
     return similarity;
 }
 
+// this is to find the category of number words
 export const mapNumbersWord =(words: WordModel[]): NumberMatchModel  => {
     const numberRegex = /^[\d\W]+$/;
     const phoneRegex = /^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/;
@@ -58,7 +59,7 @@ export const mapNumbersWord =(words: WordModel[]): NumberMatchModel  => {
     return {mapping: [mappedNumbers, notMappedNumbers].flat(), notNumbers}
 }
 
-
+// match single or multiwords
 export const matchedWords = (words: RankedWordModel[], dataSet: string[], category: Category): FuzzyMatchModel => {
      const matchedWords: WordModel[] = [];
      const notMatched: RankedWordModel[] = [];
