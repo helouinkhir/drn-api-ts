@@ -1,1 +1,1 @@
-export const FUZZY_CONIDENT = 0.8;
+export const FUZZY_CONIDENT = 0.7;

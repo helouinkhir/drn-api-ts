@@ -1,4 +1,3 @@
-import { Category } from "../ai/ai.service.model";
 import { WordModel } from "../ai/vision/vision.model";
 
 export interface RankedWordModel extends WordModel {
@@ -7,6 +6,15 @@ export interface RankedWordModel extends WordModel {
 
 export interface Mapping {
     sequence: RankedWordModel[];
-    category: Category;
     matchText: string;
+}
+
+export interface FuzzyMatchModel {
+    mapped: WordModel[];
+    notMapped: RankedWordModel[];
+}
+
+export interface NumberMatchModel {
+    mapping: WordModel[];
+    notNumbers: WordModel[];
 }

@@ -8,7 +8,8 @@ import {
 } from "./vision/vision.model";
 import db from "../../db/db";
 import { google } from "@google-cloud/vision/build/protos/protos";
-import { createMapping, wordsUniqueRanks } from "../fuzzy-search/fuzzy-search.service";
+import { mapNumbersWord, matchedWords } from "../fuzzy-search/fuzzy-search.service";
+
 
 /**
  * handle post /ai/image request to send response of vision data
@@ -42,9 +43,9 @@ export const postImageText = async (
   const discs = (discsDbResponse.data as { MoldName: string }[]).map((d) =>
     d.MoldName
   );
-  const phoneRegex = /^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/;
+  
   res.send({
-    data: categorizeData(visionResponse.data, brands, discs, phoneRegex),
+    data: categorizeData(visionResponse.data, brands, discs),
   });
 };
 
@@ -52,36 +53,22 @@ const categorizeData = (
   data: ImageDetectionData,
   brands: string[],
   discs: string[],
-  phoneRegex: RegExp
 ): ImageDetectionDatacategorized => {
-  console.log(JSON.stringify(data.text.words))
+
 
   const colorWithMaxScore = data.colors.reduce((prev, current) => {
     return prev.score > current.score ? prev : current;
   });
 
+  const numberMapping = mapNumbersWord(data.text.words);
 
-  const mappings = createMapping(data.text.words.length,
-     data.text.words.map((w, index) => ({...w,rank: index})),
-     brands,
-     discs,
-     phoneRegex,
-     []
-    )
+  const brandWordMapping = matchedWords(numberMapping.notNumbers.map((w,index) =>({...w, rank: index})),brands,Category.BRAND);
 
-    const mappedWords: WordModel[] = mappings.map(m =>({
-      word: m.matchText,
-      confidence: Math.min(...m.sequence.map(s =>s.confidence)),
-      category: m.category
-    }));
-
-    const mappingRanks: number[] = wordsUniqueRanks(mappings);
-
-    const notMappedWords: WordModel[] = data.text.words.filter((w, index) => !mappingRanks.includes(index)).map(w => ({...w, category: Category.NA }))
+  const discWordMapping = matchedWords(brandWordMapping.notMapped,discs,Category.Disc);
 
 
   return  { 
-    text: {...data.text, words:[mappedWords, notMappedWords].flat()} 
+    text: {...data.text, words:[brandWordMapping.mapped, discWordMapping.mapped, numberMapping.mapping].flat()} 
     ,
     colors : {
       primary: getPrimaryColor(colorWithMaxScore),
@@ -100,3 +87,5 @@ const getPrimaryColor = (
 
   return maxKey.charAt(0).toUpperCase() + maxKey.slice(1);
 };
+
+

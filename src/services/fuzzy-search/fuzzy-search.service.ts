@@ -1,6 +1,6 @@
 import { Category } from '../ai/ai.service.model';
 import { WordModel } from '../ai/vision/vision.model';
-import { Mapping, RankedWordModel } from './fuzzy-search.model';
+import { FuzzyMatchModel, Mapping, NumberMatchModel, RankedWordModel } from './fuzzy-search.model';
 import { FUZZY_CONIDENT } from './fuzzy.const';
 
 // Calculate Levenshtein Distance
@@ -33,60 +33,99 @@ const  similarityPercentage = (s1: string, s2: string):number => {
     return similarity;
 }
 
-// for each words loop over each word and check if there is a word on the list equal to this one or is part of a composite word
-/*
+export const mapNumbersWord =(words: WordModel[]): NumberMatchModel  => {
+    const numberRegex = /^[\d\W]+$/;
+    const phoneRegex = /^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/;
+    const mappedNumbers = [];
+    const notNumbers = [];
+    for(const word of words) {
+       if(numberRegex.test(word.word) && phoneRegex.test(word.word)) {
+          mappedNumbers.push({...word,category: Category.PHONE_NUMBER});
+       } else {
+          if(phoneRegex.test(word.word)) mappedNumbers.push({...word,category: Category.NA});
+          else notNumbers.push(word);
+       }
+    }
 
-*/
+    return {mapping: mappedNumbers, notNumbers}
+}
 
-const checkWordInTheList = (words: RankedWordModel[], dataSet: string[]): {words: RankedWordModel[]; matchTxt: string;} => {
-   for(const d of dataSet) {
-    if(similarityPercentage(d, words[0].word) >= FUZZY_CONIDENT ) return {words: [words[0]], matchTxt: d};
-   
+
+export const matchedWords = (words: RankedWordModel[], dataSet: string[], category: Category): FuzzyMatchModel => {
+     const matchedWords: WordModel[] = [];
+     const notMatched: RankedWordModel[] = [];
+
+     let currentWords = words;
+     while(currentWords.length) {
+        const matched = checkWordInTheList(currentWords[0],currentWords,dataSet);
+        if(matched.length) {
+      matched.forEach(m => matchedWords.push({
+        word: m.matchText, 
+        confidence: Math.min(...m.sequence.map(s =>s.confidence)),
+         category})) 
+      
+      
+      
+            const ranks = wordsUniqueRanks(matched)
+            currentWords=currentWords.filter(c => !ranks.includes(c.rank) );
+
+        } else {
+            notMatched.push(currentWords[0]);
+            currentWords.shift();  
+        } 
+     
+     }
+     
+      
+     return  {mapped: matchedWords, notMapped: notMatched }
+}
+
+const checkWordInTheList = (currentWord: RankedWordModel, words: RankedWordModel[], dataSet: string[]): Mapping[] => {
+ let  mappings= [];
+
+for(const d of dataSet) {
+    if(similarityPercentage(d, currentWord.word) >= FUZZY_CONIDENT ) return [{sequence: [ currentWord ], matchText: d}];
               const dWords = d.split(' ');
 
-              if(dWords.length > 1) {
-                for(let i=0; i< dWords.length; i++) {
 
-                    if(similarityPercentage(dWords[i], words[0].word) >= FUZZY_CONIDENT) {
-                        let similarities = []
-                        let indexData =i;
-                        let indexWords=1;
-                       while(indexData < dWords.length && indexWords <words.length) {
-                        if(!(similarityPercentage(dWords[indexData],words[indexWords].word)>= FUZZY_CONIDENT))  {
+              if(dWords.length > 1) {
+                let i =0;
+                let found=false;
+                while(i< dWords.length && !found){
+
+                    if(similarityPercentage(dWords[i], currentWord.word ) >= FUZZY_CONIDENT) {
+                        let similarities = [ currentWord ]
+                   
+                    
+                        let indexWords= 1;
+                        i=i+1;
+                       while(i < dWords.length && indexWords <words.length && !found) {
+                        if(similarityPercentage(dWords[i],words[indexWords].word)>= FUZZY_CONIDENT) {
                             similarities.push(words[indexWords]);
-                            indexData++;
+                       
                             indexWords++;
                         }
+                        i++;
+                       }  
+                       
+                       if(similarities.length > 1 && similarities.length/dWords.length >=0.5) {
+                        mappings.push({
+                            sequence: similarities,
+                            matchText: d,
+                        })
+                        found=true;
                        }
-                           
-                        
                     }
+                    i++;
                 }
               }
    }
 
+   return mappings;
+
 }
 
-export const createMapping = (startLength: number,words: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp, mappings: Mapping[]): Mapping[] => {
-    let length = startLength;
-    let currentMappings: Mapping[]  = []
-    
-    while(!currentMappings.length && length >0) {
-        currentMappings=  createMappingBySequenceLength(length,words,brands, discs, phoneRegex);
-        length--;
-    }
 
-    if(currentMappings.length) {
-      mappings = mappings.concat(currentMappings);
-       let currentWords: number[] = wordsUniqueRanks(mappings);
- 
-   
-
-       mappings = createMapping(length, words.filter(w => !currentWords.includes(w.rank)), brands, discs, phoneRegex,mappings);
-    }
-   
-    return mappings;
-}
 
 export const wordsUniqueRanks= (mappings: Mapping[]) => {
     return  mappings.map(m => m.sequence).reduce((acc, subArray) => {
@@ -100,61 +139,4 @@ export const wordsUniqueRanks= (mappings: Mapping[]) => {
 
 
 }
-
-const createMappingBySequenceLength = (length: number, words: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp): Mapping[] => {
-        let sequences = generateWordSequences(length, words);
-        let  mappings: Mapping[] = []
-        let mapping = null;
-        for(const s of sequences) {
-           mapping =  mapSequenceToCategory(s,brands, discs, phoneRegex);
-           if(mapping) {
-            mappings.push(mapping)
-           }
-        }
-        return mappings;
-}
-
-const mapSequenceToCategory = (sequence: RankedWordModel[], brands: string[], discs: string[], phoneRegex: RegExp): Mapping | null => {
-    const sentence = sequence.map(s => s.word).join(' ');
-    for(const b of brands) {
-        if(similarityPercentage(sentence.toLocaleLowerCase(),b.toLocaleLowerCase()) >= FUZZY_CONIDENT) return  {
-            sequence,
-            category: Category.BRAND,
-            matchText: b
-        };
-    }
-    for(const d of discs) {
-        if(similarityPercentage(sentence.toLocaleLowerCase(),d.toLocaleLowerCase()) >= FUZZY_CONIDENT) return  {
-            sequence,
-            category: Category.Disc,
-            matchText: d
-        };
-    }
-
-    if (phoneRegex.test(sentence))  return  {
-        sequence,
-        category: Category.PHONE_NUMBER,
-        matchText: sentence
-    };
-
-    return null;
-}
-
-
-const generateWordSequences = (length: number, words: RankedWordModel[]): RankedWordModel[][] => {
-    let i = 0;
-    let sequences = [];
-    while(i< words.length && words.length -i >= length) {
-        let sequence = [];
-        for(let j = i; j < i+length; j++) {
-            sequence.push(words[j]);
-        }
-        sequences.push(sequence);
-        i++;
-    }
-
-    return sequences;
-}
-
-
 

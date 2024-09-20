@@ -1,4 +1,6 @@
-import { createMapping } from "./fuzzy-search.service";
+import { Category } from "../ai/ai.service.model";
+import { matchedWords } from "./fuzzy-search.service";
+
 
 describe('fuzzy search test', () => {
   
@@ -12,12 +14,12 @@ describe('fuzzy search test', () => {
             },
             {   
                 rank: 2,
-                word: 'anp',
+                word: 'Disc',
                 confidence: 1,
             },
             {   
                 rank: 3,
-                word: 'gh',
+                word: 'Sports',
                 confidence: 1,
             },
             {   
@@ -26,9 +28,9 @@ describe('fuzzy search test', () => {
                 confidence: 1,
             }
         ];
-    const brands = ['gh ghnl', 'app', 'test'];
-       const mappings =  createMapping(words.length,words,brands,[],/^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/,[])
-       console.log(mappings)
+    const brands = ['kl gh ghnl', 'MVP Disc Sports', 'jgf Disc Sports','test'];
+       const mappings =  matchedWords(words,brands,Category.BRAND);
+       console.log(JSON.stringify(mappings))
         
       });
 
