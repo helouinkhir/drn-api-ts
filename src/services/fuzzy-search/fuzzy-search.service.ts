@@ -37,17 +37,25 @@ export const mapNumbersWord =(words: WordModel[]): NumberMatchModel  => {
     const numberRegex = /^[\d\W]+$/;
     const phoneRegex = /^(\(\d{3}\)\s|\d{3}-)\d{3}-\d{4}$/;
     const mappedNumbers = [];
-    const notNumbers = [];
-    for(const word of words) {
-       if(numberRegex.test(word.word) && phoneRegex.test(word.word)) {
-          mappedNumbers.push({...word,category: Category.PHONE_NUMBER});
-       } else {
-          if(phoneRegex.test(word.word)) mappedNumbers.push({...word,category: Category.NA});
-          else notNumbers.push(word);
-       }
+    let numberWords = words.filter(w => numberRegex.test(w.word)).map((word,index) =>({...word, rank: index}) );
+    const notNumbers = words.filter(w => !numberRegex.test(w.word))
+    let length = 1;
+    while(numberWords.length && length <= numberWords.length ) {
+        let  currentSequence = generateNumberSequences(length, numberWords);
+
+        for(const sequence of currentSequence) {
+            const sequenceTxt = sequence.map(s => s.word).join('');
+                if(phoneRegex.test(sequenceTxt)) {
+                    mappedNumbers.push({word: sequenceTxt, confidence: Math.min(...sequence.map(s=>s.confidence)),category: Category.PHONE_NUMBER});
+                    numberWords = numberWords.filter(n => !sequence.map(s=> s.rank).includes(n.rank))
+                 }  
+        }
+        length++;
     }
 
-    return {mapping: mappedNumbers, notNumbers}
+    const notMappedNumbers = numberWords.map(nw => ({word: nw.word, confidence: nw.confidence, category: Category.NA}));
+   
+    return {mapping: [mappedNumbers, notMappedNumbers].flat(), notNumbers}
 }
 
 
@@ -126,6 +134,21 @@ for(const d of dataSet) {
 
    return mappings;
 
+}
+
+const generateNumberSequences = (length: number, words: RankedWordModel[]): RankedWordModel[][] => {
+    let i = 0;
+    let sequences = [];
+    while(i< words.length && words.length -i >= length) {
+        let sequence = [];
+        for(let j = i; j < i+length; j++) {
+            sequence.push(words[j]);
+        }
+        sequences.push(sequence);
+        i++;
+    }
+
+    return sequences;
 }
 
 

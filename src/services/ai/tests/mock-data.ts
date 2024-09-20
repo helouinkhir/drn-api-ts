@@ -38,7 +38,7 @@ export const mockData = [
     image:IMG_0418,
    expectedResults: [
     {
-      word: '609-955-4266',
+      word: '609-455-4266',
       category: Category.PHONE_NUMBER
     },
     {

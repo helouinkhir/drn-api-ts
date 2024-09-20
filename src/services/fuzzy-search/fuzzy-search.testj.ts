@@ -1,5 +1,5 @@
 import { Category } from "../ai/ai.service.model";
-import { matchedWords } from "./fuzzy-search.service";
+import { mapNumbersWord, matchedWords } from "./fuzzy-search.service";
 
 
 describe('fuzzy search test', () => {
@@ -19,17 +19,17 @@ describe('fuzzy search test', () => {
             },
             {   
                 rank: 3,
-                word: 'Sports',
+                word: '609-405',
                 confidence: 1,
             },
             {   
                 rank: 4,
-                word: 'ghkl',
+                word: '-4561',
                 confidence: 1,
             }
         ];
     const brands = ['kl gh ghnl', 'MVP Disc Sports', 'jgf Disc Sports','test'];
-       const mappings =  matchedWords(words,brands,Category.BRAND);
+       const mappings =  mapNumbersWord(words)
        console.log(JSON.stringify(mappings))
         
       });
