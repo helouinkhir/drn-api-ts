@@ -8,7 +8,7 @@ import {
 } from "./vision/vision.model";
 import db from "../../db/db";
 import { google } from "@google-cloud/vision/build/protos/protos";
-import { mapNumbersWord, matchedWords } from "../fuzzy-search/fuzzy-search.service";
+import { mapNumbersWord, matcheWords } from "../fuzzy-search/fuzzy-search.service";
 
 
 /**
@@ -62,9 +62,10 @@ const categorizeData = (
 
   const numberMapping = mapNumbersWord(data.text.words);
 
-  const brandWordMapping = matchedWords(numberMapping.notNumbers.map((w,index) =>({...w, rank: index})),brands,Category.BRAND);
+  const brandWordMapping = matcheWords(numberMapping.notNumbers.map((w,index) =>({...w, rank: index})),brands,Category.BRAND);
 
-  const discWordMapping = matchedWords(brandWordMapping.notMapped,discs,Category.Disc);
+  const discWordMapping = matcheWords(brandWordMapping.notMapped,discs,Category.Disc);
+  
   const notMapped = discWordMapping.notMapped.map(w => ({word:w.word,confidence:w.confidence,category: Category.NA}))
 
 
@@ -89,4 +90,8 @@ const getPrimaryColor = (
   return maxKey.charAt(0).toUpperCase() + maxKey.slice(1);
 };
 
+
+function matchedWords(notMapped: any, discs: string[], Disc: Category) {
+  throw new Error("Function not implemented.");
+}
 
